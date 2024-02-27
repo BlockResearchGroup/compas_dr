@@ -1,14 +1,10 @@
 ********************************************************************************
-compas_dr
+Documentation of COMPAS DR
 ********************************************************************************
 
 .. rst-class:: lead
 
-COMPAS extension package for the dynamic relaxation method
-
-.. .. figure:: /_images/
-     :figclass: figure
-     :class: figure-img img-fluid
+Constrained form finding using Dynamic Relaxation
 
 
 Table of Contents
