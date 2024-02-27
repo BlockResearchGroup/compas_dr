@@ -1,21 +1,6 @@
-"""
-********************************************************************************
-compas_dr
-********************************************************************************
-
-.. currentmodule:: compas_dr
-
-
-.. toctree::
-    :maxdepth: 1
-
-
-"""
-
 from __future__ import print_function
 
 import os
-
 
 __author__ = ["tom van mele"]
 __copyright__ = "ETH Zurich - Block Research Group"
@@ -33,3 +18,5 @@ TEMP = os.path.abspath(os.path.join(HOME, "temp"))
 
 
 __all__ = ["HOME", "DATA", "DOCS", "TEMP"]
+
+__all_plugins__ = ["compas_dr.install"]

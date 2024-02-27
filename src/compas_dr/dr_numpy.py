@@ -1,13 +1,19 @@
-from numpy import array
-from numpy import isnan
+from typing import Callable
+from typing import Literal
+
+import numpy
+import scipy.sparse  # noqa: F401
+from compas.linalg import normrow
 from numpy import isinf
-from numpy import ones
-from numpy import zeros
+from numpy import isnan
 from scipy.linalg import norm
 from scipy.sparse import diags
 
-from compas.numerical import connectivity_matrix
-from compas.numerical import normrow
+import compas_dr.numdata
+
+from .numdata import ResultData
+
+old_settings = numpy.seterr(divide="ignore")
 
 
 K = [
@@ -26,62 +32,59 @@ class Coeff:
 
 
 def dr_numpy(
-    vertices,
-    edges,
-    fixed,
-    loads,
-    qpre,
-    fpre=None,
-    lpre=None,
-    linit=None,
-    E=None,
-    radius=None,
-    callback=None,
-    callback_args=None,
-    **kwargs
-):
-    """Implementation of the dynamic relaxation method for form findong and analysis
+    indata: compas_dr.numdata.InputData,
+    kmax: int = 10000,
+    dt: float = 1.0,
+    tol1: float = 1e-3,
+    tol2: float = 1e-6,
+    c: float = 0.1,
+    rk_steps: Literal[1, 2, 4] = 2,
+    callback: Callable = None,
+    callback_args: list = None,
+) -> compas_dr.numdata.ResultData:
+    """Implementation of the dynamic relaxation method for form finding and analysis
     of articulated networks of axial-force members.
 
     Parameters
     ----------
-    vertices : list
-        XYZ coordinates of the vertices.
-    edges : list
-        Connectivity of the vertices.
-    fixed : list
-        Indices of the fixed vertices.
-    loads : list
-        XYZ components of the loads on the vertices.
-    qpre : list
-        Prescribed force densities in the edges.
-    fpre : list, optional
-        Prescribed forces in the edges.
-    lpre : list, optinonal
-        Prescribed lengths of the edges.
-    linit : list, optional
-        Initial length of the edges.
-    E : list, optional
-        Stiffness of the edges.
-    radius : list, optional
-        Radius of the edges.
+    indata : :class:`compas_dr.numdata.InputData`
+        An input data object.
+    kmax : int, optional
+        The maximum number of iterations.
+    dt : float, optional
+        The time step for the integration scheme.
+    tol1 : float, optional
+        Tolerance for the sum of the length of all residual force vectors.
+    tol2 : float, optional
+        Tolerance for the sum of the length of all displacement vectors.
+    c : float, optional
+        Value used to calculate coefficients "a" and "b", with
+        "a" used as a multiplication factor for the starting velocity for the RK integration at every iteration, and
+        "b" used as a multiplication factor for the acceleration used during RK integration.
+    rk_steps : {1, 2, 4}, optional
+        The number of Runge Kutta integration steps.
     callback : callable, optional
         User-defined function that is called at every iteration.
+        If provided, the callback will be called at every iteration with the following arguments
+
+        * `k`: the number of the current iteration
+        * `x`: the current vertex coordinates
+        * `crit1`: the norm of the residual forces
+        * `crit2`: the norm of the displacement vectors
+        * `callback_args`: optional additional arguments
+
     callback_args : tuple, optional
         Additional arguments passed to the callback.
 
     Returns
     -------
-    xyz : array
-        XYZ coordinates of the equilibrium geometry.
-    q : array
-        Force densities in the edges.
-    f : array
-        Forces in the edges.
-    l : array
-        Lengths of the edges
-    r : array
-        Residual forces.
+    :class:`compas_dr.numdata.ResultData`
+        A result data object.
+
+    Raises
+    ------
+    ValueError
+        If a callback function is provided that is not callable.
 
     Notes
     -----
@@ -101,107 +104,86 @@ def dr_numpy(
     # --------------------------------------------------------------------------
     # callback
     # --------------------------------------------------------------------------
+
     if callback:
-        assert callable(callback), "The provided callback is not callable."
+        if not callable(callback):
+            raise ValueError("The provided callback is not callable.")
+
     # --------------------------------------------------------------------------
     # configuration
     # --------------------------------------------------------------------------
-    kmax = kwargs.get("kmax", 10000)
-    dt = kwargs.get("dt", 1.0)
-    tol1 = kwargs.get("tol1", 1e-3)
-    tol2 = kwargs.get("tol2", 1e-6)
-    coeff = Coeff(kwargs.get("c", 0.1))
+
+    coeff = Coeff(c)
     ca = coeff.a
     cb = coeff.b
+
     # --------------------------------------------------------------------------
-    # attribute lists
-    # --------------------------------------------------------------------------
-    num_v = len(vertices)
-    num_e = len(edges)
-    free = list(set(range(num_v)) - set(fixed))
-    # --------------------------------------------------------------------------
-    # input processing
+    # numdata
     # --------------------------------------------------------------------------
 
-    def init_array(array, length):
-        if array is None or len(array) == 0:
-            return zeros((length,), dtype=float)
-        return array
+    x = indata.vertices  # m
+    p = indata.loads  # kN
+    free = indata.free
+    qpre = indata.qpre
+    lpre = indata.lpre  # kN
+    fpre = indata.fpre  # m
+    linit = indata.linit  # m
+    E = indata.E  # kN/mm2 => GPa
+    radius = indata.radius  # mm
 
-    qpre = init_array(qpre, num_e)
-    fpre = init_array(fpre, num_e)
-    lpre = init_array(lpre, num_e)
-    linit = init_array(linit, num_e)
-    E = init_array(E, num_e)
-    radius = init_array(radius, num_e)
-    # --------------------------------------------------------------------------
-    # attribute arrays
-    # --------------------------------------------------------------------------
-    x = array(vertices, dtype=float).reshape((-1, 3))  # m
-    p = array(loads, dtype=float).reshape((-1, 3))  # kN
-    qpre = array(qpre, dtype=float).reshape((-1, 1))
-    fpre = array(fpre, dtype=float).reshape((-1, 1))  # kN
-    lpre = array(lpre, dtype=float).reshape((-1, 1))  # m
-    linit = array(linit, dtype=float).reshape((-1, 1))  # m
-    E = array(E, dtype=float).reshape((-1, 1))  # kN/mm2 => GPa
-    radius = array(radius, dtype=float).reshape((-1, 1))  # mm
-    # --------------------------------------------------------------------------
-    # sectional properties
-    # --------------------------------------------------------------------------
-    A = 3.14159 * radius**2  # mm2
-    EA = E * A  # kN
-    # --------------------------------------------------------------------------
-    # create the connectivity matrices
-    # after spline edges have been aligned
-    # --------------------------------------------------------------------------
-    C = connectivity_matrix(edges, "csr")
+    C = indata.C  # type: scipy.sparse.csr_matrix
     Ct = C.transpose()
     Ci = C[:, free]
     Cit = Ci.transpose()
     Ct2 = Ct.copy()
     Ct2.data **= 2
+
+    A = 3.14159 * radius**2  # mm2
+    EA = E * A  # kN
+
+    # --------------------------------------------------------------------------
+    # initial values
     # --------------------------------------------------------------------------
     # if none of the initial lengths are set,
     # set the initial lengths to the current lengths
     # --------------------------------------------------------------------------
-    if all(linit == 0):
-        linit = normrow(C.dot(x))
-    # --------------------------------------------------------------------------
-    # initial values
-    # --------------------------------------------------------------------------
-    q = ones((num_e, 1), dtype=float)
-    l = normrow(C.dot(x))  # noqa: E741
+
+    q = indata.q0
+    l = indata.l0  # noqa: E741
     f = q * l
-    v = zeros((num_v, 3), dtype=float)
-    r = zeros((num_v, 3), dtype=float)
+    v = indata.v0
+    r = indata.r0
+
+    if all(linit == 0):
+        linit = indata.l0
+
     # --------------------------------------------------------------------------
     # helpers
     # --------------------------------------------------------------------------
 
     def rk(x0, v0, steps=2):
-        def a(t, v):
+        def acceleration(t, v):
             dx = v * t
             x[free] = x0[free] + dx[free]
-            # update residual forces
             r[free] = p[free] - D.dot(x)
             return cb * r / mass
 
         if steps == 1:
-            return a(dt, v0)
+            return acceleration(dt, v0)
 
         if steps == 2:
             B = [0.0, 1.0]
-            K0 = dt * a(K[0][0] * dt, v0)
-            K1 = dt * a(K[1][0] * dt, v0 + K[1][1] * K0)
+            K0 = dt * acceleration(K[0][0] * dt, v0)
+            K1 = dt * acceleration(K[1][0] * dt, v0 + K[1][1] * K0)
             dv = B[0] * K0 + B[1] * K1
             return dv
 
         if steps == 4:
             B = [1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0]
-            K0 = dt * a(K[0][0] * dt, v0)
-            K1 = dt * a(K[1][0] * dt, v0 + K[1][1] * K0)
-            K2 = dt * a(K[2][0] * dt, v0 + K[2][1] * K0 + K[2][2] * K1)
-            K3 = dt * a(K[3][0] * dt, v0 + K[3][1] * K0 + K[3][2] * K1 + K[3][3] * K2)
+            K0 = dt * acceleration(K[0][0] * dt, v0)
+            K1 = dt * acceleration(K[1][0] * dt, v0 + K[1][1] * K0)
+            K2 = dt * acceleration(K[2][0] * dt, v0 + K[2][1] * K0 + K[2][2] * K1)
+            K3 = dt * acceleration(K[3][0] * dt, v0 + K[3][1] * K0 + K[3][2] * K1 + K[3][3] * K2)
             dv = B[0] * K0 + B[1] * K1 + B[2] * K2 + B[3] * K3
             return dv
 
@@ -210,9 +192,8 @@ def dr_numpy(
     # --------------------------------------------------------------------------
     # start iterating
     # --------------------------------------------------------------------------
-    for k in range(kmax):
-        # print(k)
 
+    for k in range(kmax):
         q_fpre = fpre / l
         q_lpre = f / lpre
         q_EA = EA * (l - linit) / (linit * l)
@@ -225,27 +206,37 @@ def dr_numpy(
         Q = diags([q[:, 0]], [0])
         D = Cit.dot(Q).dot(C)
         mass = 0.5 * dt**2 * Ct2.dot(qpre + q_fpre + q_lpre + EA / linit)
+
         # RK
         x0 = x.copy()
         v0 = ca * v.copy()
-        dv = rk(x0, v0, steps=4)
+        dv = rk(x0, v0, steps=rk_steps)
         v[free] = v0[free] + dv[free]
         dx = v * dt
         x[free] = x0[free] + dx[free]
+
         # update
         u = C.dot(x)
         l = normrow(u)  # noqa: E741
         f = q * l
         r = p - Ct.dot(Q).dot(u)
+
         # crits
         crit1 = norm(r[free])
         crit2 = norm(dx[free])
+
         # callback
         if callback:
-            callback(k, x, [crit1, crit2], callback_args)
+            callback(k, x, crit1, crit2, callback_args)
+
         # convergence
         if crit1 < tol1:
             break
         if crit2 < tol2:
             break
-    return x, q, f, l, r
+
+    # --------------------------------------------------------------------------
+    # result
+    # --------------------------------------------------------------------------
+
+    return ResultData(xyz=x, q=q, forces=f, lengths=l, residuals=r)

@@ -2,11 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from copy import deepcopy
 from math import sqrt
-
-__all__ = ["dr"]
-
 
 K = [
     [0.0],
@@ -172,13 +168,13 @@ def dr(
     if callback:
         if not callable(callback):
             raise Exception("The callback is not callable.")
+
     # --------------------------------------------------------------------------
     # preprocess
     # --------------------------------------------------------------------------
+
     n = len(vertices)
     e = len(edges)
-
-    # i_nbrs = {i: [ij[1] if ij[0] == i else ij[0] for ij in edges if i in ij] for i in range(n)}
 
     i_nbrs = adjacency_from_edges(edges)
 
@@ -189,24 +185,29 @@ def dr(
     ca = coeff.a
     cb = coeff.b
     free = list(set(range(n)) - set(fixed))
+
     # --------------------------------------------------------------------------
     # attribute arrays
     # --------------------------------------------------------------------------
+
     X = vertices
     P = loads
     Qpre = qpre or [0.0 for _ in range(e)]
     Fpre = fpre or [0.0 for _ in range(e)]
     Lpre = lpre or [0.0 for _ in range(e)]
+
     # --------------------------------------------------------------------------
     # initial values
     # --------------------------------------------------------------------------
+
     Q = [1.0 for _ in range(e)]
     L = [sum((X[i][axis] - X[j][axis]) ** 2 for axis in (0, 1, 2)) ** 0.5 for i, j in iter(edges)]
-    F = [q * l for q, l in zip(Q, L)]
+    F = [q * length for q, length in zip(Q, L)]
     M = [sum(0.5 * dt**2 * Q[ij_e[(i, j)]] for j in i_nbrs[i]) for i in range(n)]
     V = [[0.0, 0.0, 0.0] for _ in range(n)]
     R = [[0.0, 0.0, 0.0] for _ in range(n)]
     dX = [[0.0, 0.0, 0.0] for _ in range(n)]
+
     # --------------------------------------------------------------------------
     # helpers
     # --------------------------------------------------------------------------
@@ -254,7 +255,10 @@ def dr(
             k1 = [[dt * a1[i][axis] for axis in (0, 1, 2)] for i in range(n)]
             a2 = a(
                 K[2][0] * dt,
-                [[V0[i][axis] + K[2][1] * k0[i][axis] + K[2][2] * k1[i][axis] for axis in (0, 1, 2)] for i in range(n)],
+                [
+                    [V0[i][axis] + K[2][1] * k0[i][axis] + K[2][2] * k1[i][axis] for axis in (0, 1, 2)]
+                    for i in range(n)
+                ],
             )
             k2 = [[dt * a2[i][axis] for axis in (0, 1, 2)] for i in range(n)]
             a3 = a(
@@ -281,6 +285,7 @@ def dr(
     # --------------------------------------------------------------------------
     # start iterating
     # --------------------------------------------------------------------------
+
     for k in range(kmax):
         Qfpre = [a / b if b else 0 for a, b in zip(Fpre, L)]
         Qlpre = [a / b if b else 0 for a, b in zip(F, Lpre)]
@@ -288,7 +293,7 @@ def dr(
         Q = [a + b + c for a, b, c in zip(Qpre, Qfpre, Qlpre)]
         M = [sum(0.5 * dt**2 * Q[ij_e[(i, j)]] for j in i_nbrs[i]) for i in range(n)]
 
-        X0 = deepcopy(X)
+        X0 = [_[:] for _ in X]
         V0 = [[ca * V[i][axis] for axis in (0, 1, 2)] for i in range(n)]
 
         # RK
@@ -301,7 +306,7 @@ def dr(
             X[i] = [X0[i][axis] + dX[i][axis] for axis in (0, 1, 2)]
 
         L = [sum((X[i][axis] - X[j][axis]) ** 2 for axis in (0, 1, 2)) ** 0.5 for i, j in iter(edges)]
-        F = [q * l for q, l in zip(Q, L)]
+        F = [q * length for q, length in zip(Q, L)]
 
         update_R()
 
@@ -318,9 +323,11 @@ def dr(
             break
         if crit2 < tol2:
             break
+
     # --------------------------------------------------------------------------
     # update
     # --------------------------------------------------------------------------
+
     update_R()
 
     return X, Q, F, L, R
