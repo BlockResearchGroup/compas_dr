@@ -1,0 +1,2 @@
+class GeometryNotRegisteredAsConstraint(Exception):
+    pass
