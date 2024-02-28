@@ -12,22 +12,26 @@ from compas_invocations.console import chdir
 def lint(ctx):
     """Check the consistency of coding style."""
 
-    print("Running ruff linter...")
+    print("\nRunning ruff linter...")
     ctx.run("ruff check --fix src tests")
 
-    print("Running black linter...")
+    print("\nRunning black linter...")
     ctx.run("black --check --diff --color src tests")
+
+    print("\nAll linting is done!")
 
 
 @invoke.task()
 def format(ctx):
     """Reformat the code base using black."""
 
-    print("Running ruff formatter...")
+    print("\nRunning ruff formatter...")
     ctx.run("ruff format src tests")
 
-    print("Running black formatter...")
+    print("\nRunning black formatter...")
     ctx.run("black src tests")
+
+    print("\nAll formatting is done!")
 
 
 @invoke.task()
