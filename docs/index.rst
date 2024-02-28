@@ -4,7 +4,11 @@ Documentation of COMPAS DR
 
 .. rst-class:: lead
 
-Constrained form finding using Dynamic Relaxation
+This package provides equilibrium solvers and constraints
+for constrained form finding using the "dynamic relaxation" method.
+The solvers can be used through the :mod:`compas_dr` package directly,
+or through COMPAS FormFinder, which is a form finding tool with a GUI
+combining various different form finding approaches.
 
 
 Table of Contents
