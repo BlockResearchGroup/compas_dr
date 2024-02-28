@@ -42,7 +42,7 @@ zip-safe = false
 
 [tool.setuptools.dynamic]
 dependencies = { file = "requirements.txt" }
-optional-dependencies = { dev = { file = "requirements-dev.txt" } }
+optional-dependencies = { dev = { file = "requirements-dev.txt" }, hpc = { file = "requirements-hpc.txt" } }
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -55,7 +55,7 @@ where = ["src"]
 minversion = "6.0"
 testpaths = ["tests", "src/compas_dr"]
 python_files = ["test_*.py", "*_test.py", "test.py"]
-addopts = ["-ra", "--strict", "--doctest-glob=*.rst", "--tb=short"]
+addopts = ["-ra", "--strict-markers", "--doctest-glob=*.rst", "--tb=short"]
 doctest_optionflags = [
     "NORMALIZE_WHITESPACE",
     "IGNORE_EXCEPTION_DETAIL",
