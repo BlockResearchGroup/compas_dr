@@ -1,5 +1,6 @@
 from typing import Callable
 from typing import Literal
+from typing import Sequence
 
 import numpy
 import scipy.sparse  # noqa: F401
@@ -10,8 +11,8 @@ from scipy.linalg import norm
 from scipy.sparse import diags
 
 import compas_dr.numdata
-
-from .numdata import ResultData
+from compas_dr.constraints import Constraint
+from compas_dr.numdata import ResultData
 
 old_settings = numpy.seterr(divide="ignore")
 
@@ -31,8 +32,10 @@ class Coeff:
         self.b = 0.5 * (1 + self.a)
 
 
-def dr_numpy(
+def dr_constrained_numpy(
+    *,
     indata: compas_dr.numdata.InputData,
+    constraints: Sequence[Constraint],
     kmax: int = 10000,
     dt: float = 1.0,
     tol1: float = 1e-3,
@@ -49,6 +52,8 @@ def dr_numpy(
     ----------
     indata : :class:`compas_dr.numdata.InputData`
         An input data object.
+    constraints : list[:class:`~compas_fd.constraints.Constraint`]
+        Vertex constraints.
     kmax : int, optional
         The maximum number of iterations.
     dt : float, optional
@@ -208,6 +213,7 @@ def dr_numpy(
         mass = 0.5 * dt**2 * Ct2.dot(qpre + q_fpre + q_lpre + EA / linit)
 
         # RK
+
         x0 = x.copy()
         v0 = ca * v.copy()
         dv = rk(x0, v0, steps=rk_steps)
@@ -216,20 +222,35 @@ def dr_numpy(
         x[free] = x0[free] + dx[free]
 
         # update
+
         u = C.dot(x)
         l = normrow(u)  # noqa: E741
         f = q * l
         r = p - Ct.dot(Q).dot(u)
 
+        # update constraints
+
+        for vertex, constraint in enumerate(constraints):
+            if not constraint:
+                continue
+            constraint.location = x[vertex]
+            constraint.residual = r[vertex]
+            constraint.update(damping=c)
+            x[vertex] = constraint.location
+            r[vertex] = constraint.residual
+
         # crits
+
         crit1 = norm(r[free])
         crit2 = norm(dx[free])
 
         # callback
+
         if callback:
             callback(k, x, crit1, crit2, callback_args)
 
         # convergence
+
         if crit1 < tol1:
             break
         if crit2 < tol2:
