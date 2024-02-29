@@ -545,15 +545,24 @@ document.write(`
 <h1>Installation</h1>
 <section id="stable">
 <h2>Stable</h2>
-<p>Stable releases can be installed from PyPI.</p>
+<p>Stable releases are available on PyPI and can be installed with pip.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>compas_dr
+</pre></div>
+</div>
+</section>
+<section id="latest">
+<h2>Latest</h2>
+<p>The latest version can be installed from local source.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/blockresearchgroup/compas_dr.git
+<span class="nb">cd</span><span class="w"> </span>compas_dr
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
 </section>
 <section id="development">
 <h2>Development</h2>
-<p>The latest development version can be installed from GitHub.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/bleockresearchgroup/compas_dr.git
+<p>To install <cite>compas_dr</cite> for development, install from local source with the “dev” requirements.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/blockresearchgroup/compas_dr.git
 <span class="nb">cd</span><span class="w"> </span>compas_dr
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </pre></div>
@@ -583,6 +592,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stable">Stable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#latest">Latest</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">Development</a></li>
 </ul>
   </nav></div>
