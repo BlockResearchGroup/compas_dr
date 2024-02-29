@@ -22,8 +22,6 @@ Classes
 
     CircleConstraint
     CurveConstraint
-    FrameConstraint
     LineConstraint
     PlaneConstraint
     SurfaceConstraint
-    VectorConstraint
