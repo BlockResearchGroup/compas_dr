@@ -590,16 +590,11 @@ leaving only the components normal to the constraint curve.</p>
     <span class="k">if</span> <span class="n">mesh</span><span class="o">.</span><span class="n">is_edge_on_boundary</span><span class="p">(</span><span class="n">edge</span><span class="p">):</span>
         <span class="n">qpre</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
 
-<span class="n">qpre</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">mesh</span><span class="o">.</span><span class="n">edges</span><span class="p">():</span>
-    <span class="k">if</span> <span class="n">mesh</span><span class="o">.</span><span class="n">is_edge_on_boundary</span><span class="p">(</span><span class="n">edge</span><span class="p">):</span>
-        <span class="n">qpre</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">qpre</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-
 <span class="n">inputdata</span> <span class="o">=</span> <span class="n">InputData</span><span class="o">.</span><span class="n">from_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">fixed</span><span class="p">,</span> <span class="n">loads</span><span class="p">,</span> <span class="n">qpre</span><span class="p">)</span>
 
-<span class="c1"># constraints</span>
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Constraints</span>
+<span class="c1"># =============================================================================</span>
 
 <span class="n">arch</span> <span class="o">=</span> <span class="n">NurbsCurve</span><span class="o">.</span><span class="n">from_points</span><span class="p">([[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
 <span class="n">constraint</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
