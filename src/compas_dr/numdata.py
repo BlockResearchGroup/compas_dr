@@ -351,3 +351,24 @@ class ResultData(Data):
         self.forces = forces
         self.lengths = lengths
         self.residuals = residuals
+
+    def update_mesh(self, mesh, vertex_index=None):
+        # type: (compas.datastructures.Mesh, dict[int, int] | None) -> None
+        """Update the geometry of a mesh with the results.
+
+        Parameters
+        ----------
+        mesh
+        vertex_index
+
+        Returns
+        -------
+        None
+
+        """
+        if not vertex_index:
+            vertex_index = {vertex: index for index, vertex in enumerate(mesh.vertices())}
+
+        for vertex in mesh.vertices():
+            index = vertex_index[vertex]
+            mesh.vertex_attributes(vertex, "xyz", self.xyz[index])

@@ -35,6 +35,8 @@ constraint = Constraint(arch)
 
 constraints = [None] * mesh.number_of_vertices()
 for vertex in mesh.vertices_where(x=5):
+    if vertex in fixed:
+        continue
     constraints[vertex] = constraint
     fixed.append(vertex)
 
@@ -44,37 +46,30 @@ for vertex in mesh.vertices_where(x=5):
 
 result = dr_constrained_numpy(indata=inputdata, constraints=constraints)
 
-for vertex in mesh.vertices():
-    mesh.vertex_attributes(vertex, "xyz", result.xyz[vertex])
+result.update_mesh(mesh)
 
 # =============================================================================
 # Visualization
 # =============================================================================
+
+forcecolor = Color.green().darkened(50)
 
 viewer = App()
 viewer.view.camera.position = [-7, -10, 5]
 viewer.view.camera.look_at([5, 5, 2])
 
 viewer.add(mesh)
-
-for vertex in mesh.vertices():
-    point = Point(*mesh.vertex_coordinates(vertex))
-    residual = Vector(*result.residuals[vertex])
-
-    if vertex in fixed:
-        ball = Sphere(radius=0.1, point=point)
-
-        if constraints[vertex]:
-            viewer.add(ball.to_brep(), facecolor=Color.blue())
-        else:
-            viewer.add(ball.to_brep(), facecolor=Color.red())
-
-        viewer.add(
-            Line(point, point - residual * 0.1),
-            linecolor=Color.green().darkened(50),
-            linewidth=3,
-        )
-
 viewer.add(arch.to_polyline(), linecolor=Color.cyan(), linewidth=3)
+
+for vertex in fixed:
+    point = Point(*mesh.vertex_coordinates(vertex))
+    residual = Vector(*result.residuals[vertex]) * 0.1
+
+    ball = Sphere(radius=0.1, point=point).to_brep()
+    line = Line(point, point - residual)
+    ballcolor = Color.blue() if constraints[vertex] else Color.red()
+
+    viewer.add(ball, facecolor=ballcolor)
+    viewer.add(line, linecolor=forcecolor, linewidth=3)
 
 viewer.run()
