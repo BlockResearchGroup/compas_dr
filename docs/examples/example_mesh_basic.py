@@ -25,21 +25,18 @@ for index, edge in enumerate(mesh.edges()):
 indata = InputData.from_mesh(mesh, fixed, loads, qpre)
 
 # =============================================================================
-# Solve
+# Solve and Update
 # =============================================================================
 
 result = dr_numpy(indata=indata)
 
-# =============================================================================
-# Update
-# =============================================================================
-
-for vertex in mesh.vertices():
-    mesh.vertex_attributes(vertex, "xyz", result.xyz[vertex])
+result.update_mesh(mesh)
 
 # =============================================================================
 # Visualize
 # =============================================================================
+
+forcecolor = Color.green().darkened(50)
 
 viewer = App()
 viewer.view.camera.position = [5, -5, 20]
@@ -49,14 +46,12 @@ viewer.add(mesh)
 
 for vertex in fixed:
     point = Point(*mesh.vertex_coordinates(vertex))
-    residual = Vector(*result.residuals[vertex])
-    ball = Sphere(radius=0.1, point=point)
+    residual = Vector(*result.residuals[vertex]) * 0.1
 
-    viewer.add(ball.to_brep(), facecolor=Color.red())
-    viewer.add(
-        Line(point, point - residual * 0.1),
-        linecolor=Color.green().darkened(50),
-        linewidth=3,
-    )
+    ball = Sphere(radius=0.1, point=point).to_brep()
+    line = Line(point, point - residual)
+
+    viewer.add(ball, facecolor=Color.red())
+    viewer.add(line, linecolor=forcecolor, linewidth=3)
 
 viewer.run()
