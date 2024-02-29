@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `compas_dr.solvers.dr`.
+* Added `compas_dr.solvers.dr_numpy`.
+* Added `compas_dr.solvers.dr_constrained_numpy`.
+* Added `compas_dr.types`.
+* Added `compas_dr.numdata.InputData`.
+* Added `compas_dr.numdata.ResultData`.
+* Added `compas_dr.loads.SelfweightCalculator`.
+* Added `compas_dr.constraints.Constraint`.
+* Added `compas_dr.constraints.LineConstraint`.
+* Added `compas_dr.constraints.PlaneConstraint`.
+* Added `compas_dr.constraints.CircleConstraint`.
+* Added `compas_dr.constraints.NurbsCurveConstraint`.
+* Added `compas_dr.constraints.NurbsSurfaceConstraint`.
+
 ### Changed
 
 ### Removed
