@@ -8,7 +8,6 @@ import sphinx_compas2_theme
 
 project = "COMPAS DR"
 copyright = "Block Research Group - ETH Zurich"
-author = "Tom Van Mele"
 package = "compas_dr"
 organization = "blockresearchgroup"
 
