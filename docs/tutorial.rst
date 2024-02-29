@@ -16,3 +16,9 @@ Options
 
 Visualization
 =============
+
+Working in Rhino
+================
+
+Working in Blender
+==================
