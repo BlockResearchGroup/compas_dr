@@ -16,13 +16,11 @@ mesh = Mesh.from_meshgrid(dx=10, nx=10)
 
 fixed = list(mesh.vertices_where(vertex_degree=2))
 loads = [[0, 0, 0] for _ in range(mesh.number_of_vertices())]
+qpre = [1.0] * mesh.number_of_edges()
 
-qpre = []
-for edge in mesh.edges():
+for index, edge in enumerate(mesh.edges()):
     if mesh.is_edge_on_boundary(edge):
-        qpre.append(10)
-    else:
-        qpre.append(1.0)
+        qpre[index] = 10
 
 indata = InputData.from_mesh(mesh, fixed, loads, qpre)
 

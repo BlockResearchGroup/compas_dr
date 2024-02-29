@@ -24,16 +24,11 @@ for index, edge in enumerate(mesh.edges()):
     if mesh.is_edge_on_boundary(edge):
         qpre[index] = 10
 
-qpre = []
-for edge in mesh.edges():
-    if mesh.is_edge_on_boundary(edge):
-        qpre.append(10)
-    else:
-        qpre.append(1.0)
-
 inputdata = InputData.from_mesh(mesh, fixed, loads, qpre)
 
-# constraints
+# =============================================================================
+# Constraints
+# =============================================================================
 
 arch = NurbsCurve.from_points([[5, 0, 0], [5, 5, 5], [5, 10, 0]])
 constraint = Constraint(arch)
