@@ -5,20 +5,32 @@ Installation
 Stable
 ======
 
-Stable releases can be installed from PyPI.
+Stable releases are available on PyPI and can be installed with pip.
 
 .. code-block:: bash
 
     pip install compas_dr
 
 
-Development
-===========
+Latest
+======
 
-The latest development version can be installed from GitHub.
+The latest version can be installed from local source.
 
 .. code-block:: bash
 
-    git clone https://github.com/bleockresearchgroup/compas_dr.git
+    git clone https://github.com/blockresearchgroup/compas_dr.git
+    cd compas_dr
+    pip install -e .
+
+
+Development
+===========
+
+To install `compas_dr` for development, install from local source with the "dev" requirements.
+
+.. code-block:: bash
+
+    git clone https://github.com/blockresearchgroup/compas_dr.git
     cd compas_dr
     pip install -e ".[dev]"
