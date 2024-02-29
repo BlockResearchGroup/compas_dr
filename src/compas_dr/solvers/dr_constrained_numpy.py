@@ -52,7 +52,7 @@ def dr_constrained_numpy(
     ----------
     indata : :class:`compas_dr.numdata.InputData`
         An input data object.
-    constraints : list[:class:`~compas_fd.constraints.Constraint`]
+    constraints : list[:class:`~compas_dr.constraints.Constraint`]
         Vertex constraints.
     kmax : int, optional
         The maximum number of iterations.

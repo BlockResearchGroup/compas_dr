@@ -44,12 +44,7 @@ numpydoc_attributes_as_param_list = True
 # autodoc options
 
 autodoc_type_aliases = {
-    # "Vertices": "compas_cgal.types.Vertices",
-    # "Faces": "compas_cgal.types.Faces",
-    # "VerticesFaces": "compas_cgal.types.VerticesFaces",
-    # "VerticesFacesNumpy": "compas_cgal.types.VerticesFacesNumpy",
-    # "PolylinesNumpy": "compas_cgal.types.PolylinesNumpy",
-    # "Planes": "compas_cgal.types.Planes",
+    "FloatNx3": "compas_dr.types.FloatNx3",
 }
 
 autodoc_typehints_description_target = "documented"

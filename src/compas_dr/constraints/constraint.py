@@ -45,7 +45,7 @@ class Constraint(Data):
     Examples
     --------
     >>> from compas.geometry import Line
-    >>> from compas_fd.constraints import Constraint
+    >>> from compas_dr.constraints import Constraint
     >>> line = Line([0, 0, 0], [1, 0, 0])
     >>> constraint = Constraint(line)
     >>> constraint

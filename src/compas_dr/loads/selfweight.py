@@ -4,8 +4,9 @@ from compas.datastructures import Mesh
 from compas.geometry import cross_vectors
 from compas.geometry import length_vector
 from compas.matrices import face_matrix
-from compas_fd.types import FloatNx1
-from compas_fd.types import FloatNx3
+
+from compas_dr.types import FloatNx1
+from compas_dr.types import FloatNx3
 
 
 class SelfweightCalculator:
@@ -27,7 +28,7 @@ class SelfweightCalculator:
     Examples
     --------
     >>> from compas.datastructures import Mesh
-    >>> from compas_fd.loads import SelfWeightCalculator
+    >>> from compas_dr.loads import SelfWeightCalculator
     >>> mesh = Mesh.from_meshgrid(dx=10, nx=10)
     >>> mesh.update_default_vertex_attributes(t=0.10)
     >>> density = 22
