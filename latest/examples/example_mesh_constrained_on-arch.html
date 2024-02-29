@@ -601,6 +601,8 @@ leaving only the components normal to the constraint curve.</p>
 
 <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">mesh</span><span class="o">.</span><span class="n">number_of_vertices</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">mesh</span><span class="o">.</span><span class="n">vertices_where</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">fixed</span><span class="p">:</span>
+        <span class="k">continue</span>
     <span class="n">constraints</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span> <span class="o">=</span> <span class="n">constraint</span>
     <span class="n">fixed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
 
@@ -610,38 +612,31 @@ leaving only the components normal to the constraint curve.</p>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">dr_constrained_numpy</span><span class="p">(</span><span class="n">indata</span><span class="o">=</span><span class="n">inputdata</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
 
-<span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">mesh</span><span class="o">.</span><span class="n">vertices</span><span class="p">():</span>
-    <span class="n">mesh</span><span class="o">.</span><span class="n">vertex_attributes</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="s2">&quot;xyz&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">xyz</span><span class="p">[</span><span class="n">vertex</span><span class="p">])</span>
+<span class="n">result</span><span class="o">.</span><span class="n">update_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
 
 <span class="c1"># =============================================================================</span>
 <span class="c1"># Visualization</span>
 <span class="c1"># =============================================================================</span>
+
+<span class="n">forcecolor</span> <span class="o">=</span> <span class="n">Color</span><span class="o">.</span><span class="n">green</span><span class="p">()</span><span class="o">.</span><span class="n">darkened</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
 
 <span class="n">viewer</span> <span class="o">=</span> <span class="n">App</span><span class="p">()</span>
 <span class="n">viewer</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
 <span class="n">viewer</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">look_at</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 
 <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">mesh</span><span class="o">.</span><span class="n">vertices</span><span class="p">():</span>
-    <span class="n">point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="o">*</span><span class="n">mesh</span><span class="o">.</span><span class="n">vertex_coordinates</span><span class="p">(</span><span class="n">vertex</span><span class="p">))</span>
-    <span class="n">residual</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="o">*</span><span class="n">result</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">vertex</span><span class="p">])</span>
-
-    <span class="k">if</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">fixed</span><span class="p">:</span>
-        <span class="n">ball</span> <span class="o">=</span> <span class="n">Sphere</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="n">point</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">constraints</span><span class="p">[</span><span class="n">vertex</span><span class="p">]:</span>
-            <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ball</span><span class="o">.</span><span class="n">to_brep</span><span class="p">(),</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">Color</span><span class="o">.</span><span class="n">blue</span><span class="p">())</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ball</span><span class="o">.</span><span class="n">to_brep</span><span class="p">(),</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">Color</span><span class="o">.</span><span class="n">red</span><span class="p">())</span>
-
-        <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-            <span class="n">Line</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">point</span> <span class="o">-</span> <span class="n">residual</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">),</span>
-            <span class="n">linecolor</span><span class="o">=</span><span class="n">Color</span><span class="o">.</span><span class="n">green</span><span class="p">()</span><span class="o">.</span><span class="n">darkened</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>
-            <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-        <span class="p">)</span>
-
 <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">arch</span><span class="o">.</span><span class="n">to_polyline</span><span class="p">(),</span> <span class="n">linecolor</span><span class="o">=</span><span class="n">Color</span><span class="o">.</span><span class="n">cyan</span><span class="p">(),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">fixed</span><span class="p">:</span>
+    <span class="n">point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="o">*</span><span class="n">mesh</span><span class="o">.</span><span class="n">vertex_coordinates</span><span class="p">(</span><span class="n">vertex</span><span class="p">))</span>
+    <span class="n">residual</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="o">*</span><span class="n">result</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">vertex</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.1</span>
+
+    <span class="n">ball</span> <span class="o">=</span> <span class="n">Sphere</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="n">point</span><span class="p">)</span><span class="o">.</span><span class="n">to_brep</span><span class="p">()</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">Line</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">point</span> <span class="o">-</span> <span class="n">residual</span><span class="p">)</span>
+    <span class="n">ballcolor</span> <span class="o">=</span> <span class="n">Color</span><span class="o">.</span><span class="n">blue</span><span class="p">()</span> <span class="k">if</span> <span class="n">constraints</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span> <span class="k">else</span> <span class="n">Color</span><span class="o">.</span><span class="n">red</span><span class="p">()</span>
+
+    <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ball</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">ballcolor</span><span class="p">)</span>
+    <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">linecolor</span><span class="o">=</span><span class="n">forcecolor</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
 <span class="n">viewer</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
