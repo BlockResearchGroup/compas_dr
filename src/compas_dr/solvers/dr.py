@@ -255,30 +255,15 @@ def dr(
             k1 = [[dt * a1[i][axis] for axis in (0, 1, 2)] for i in range(n)]
             a2 = a(
                 K[2][0] * dt,
-                [
-                    [V0[i][axis] + K[2][1] * k0[i][axis] + K[2][2] * k1[i][axis] for axis in (0, 1, 2)]
-                    for i in range(n)
-                ],
+                [[V0[i][axis] + K[2][1] * k0[i][axis] + K[2][2] * k1[i][axis] for axis in (0, 1, 2)] for i in range(n)],
             )
             k2 = [[dt * a2[i][axis] for axis in (0, 1, 2)] for i in range(n)]
             a3 = a(
                 K[3][0] * dt,
-                [
-                    [
-                        V0[i][axis] + K[3][1] * k0[i][axis] + K[3][2] * k1[i][axis] + K[3][3] * k2[i][axis]
-                        for axis in (0, 1, 2)
-                    ]
-                    for i in range(n)
-                ],
+                [[V0[i][axis] + K[3][1] * k0[i][axis] + K[3][2] * k1[i][axis] + K[3][3] * k2[i][axis] for axis in (0, 1, 2)] for i in range(n)],
             )
             k3 = [[dt * a3[i][axis] for axis in (0, 1, 2)] for i in range(n)]
-            return [
-                [
-                    B[0] * k0[i][axis] + B[1] * k1[i][axis] + B[2] * k2[i][axis] + B[3] * k3[i][axis]
-                    for axis in (0, 1, 2)
-                ]
-                for i in range(n)
-            ]
+            return [[B[0] * k0[i][axis] + B[1] * k1[i][axis] + B[2] * k2[i][axis] + B[3] * k3[i][axis] for axis in (0, 1, 2)] for i in range(n)]
 
         raise NotImplementedError
 
