@@ -8,7 +8,7 @@ from compas.geometry import Vector
 from compas_dr.constraints import Constraint
 from compas_dr.numdata import InputData
 from compas_dr.solvers import dr_constrained_numpy
-from compas_view2.app import App
+from compas_viewer import Viewer
 
 # =============================================================================
 # Input
@@ -54,22 +54,22 @@ result.update_mesh(mesh)
 
 forcecolor = Color.green().darkened(50)
 
-viewer = App()
-viewer.view.camera.position = [-7, -10, 5]
-viewer.view.camera.look_at([5, 5, 2])
+viewer = Viewer()
+viewer.renderer.camera.target = [5, 5, 2]
+viewer.renderer.camera.position = [-7, -10, 5]
 
-viewer.add(mesh)
-viewer.add(arch.to_polyline(), linecolor=Color.cyan(), linewidth=3)
+viewer.scene.add(mesh, show_points=False)
+viewer.scene.add(arch.to_polyline(), linecolor=Color.cyan(), lineswidth=3, show_points=False)
 
 for vertex in fixed:
     point = Point(*mesh.vertex_coordinates(vertex))
-    residual = Vector(*result.residuals[vertex]) * 0.1
+    residual = Vector(*result.residuals[vertex]) * 0.5
 
     ball = Sphere(radius=0.1, point=point).to_brep()
     line = Line(point, point - residual)
     ballcolor = Color.blue() if constraints[vertex] else Color.red()
 
-    viewer.add(ball, facecolor=ballcolor)
-    viewer.add(line, linecolor=forcecolor, linewidth=3)
+    viewer.scene.add(ball, surfacecolor=ballcolor, show_points=False)
+    viewer.scene.add(line, linecolor=forcecolor, lineswidth=3, show_points=False)
 
-viewer.run()
+viewer.show()

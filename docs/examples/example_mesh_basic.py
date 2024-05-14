@@ -6,7 +6,7 @@ from compas.geometry import Sphere
 from compas.geometry import Vector
 from compas_dr.numdata import InputData
 from compas_dr.solvers import dr_numpy
-from compas_view2.app import App
+from compas_viewer import Viewer
 
 # =============================================================================
 # Input
@@ -38,11 +38,11 @@ result.update_mesh(mesh)
 
 forcecolor = Color.green().darkened(50)
 
-viewer = App()
-viewer.view.camera.position = [5, -5, 20]
-viewer.view.camera.look_at([5, 5, 0])
+viewer = Viewer()
+viewer.renderer.camera.target = [5, 5, 0]
+viewer.renderer.camera.position = [5, 4, 20]
 
-viewer.add(mesh)
+viewer.scene.add(mesh, show_points=False)
 
 for vertex in fixed:
     point = Point(*mesh.vertex_coordinates(vertex))
@@ -51,7 +51,7 @@ for vertex in fixed:
     ball = Sphere(radius=0.1, point=point).to_brep()
     line = Line(point, point - residual)
 
-    viewer.add(ball, facecolor=Color.red())
-    viewer.add(line, linecolor=forcecolor, linewidth=3)
+    viewer.scene.add(ball, surfacecolor=Color.red())
+    viewer.scene.add(line, linecolor=forcecolor, lineswidth=3, show_points=False)
 
-viewer.run()
+viewer.show()
