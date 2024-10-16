@@ -128,9 +128,6 @@ graph.nodes_attribute(
     keys=graph.nodes_where(outer_ring=True),
 )
 
-# for node in [0, 11, 21, 22, 32]:
-#     graph.unset_node_attribute(node, "constraint")
-
 for node in [11, 33]:
     graph.unset_node_attribute(node, "constraint")
 
@@ -256,6 +253,8 @@ residualcolor = Color.cyan()
 supportcolor = Color(0.2, 0.2, 0.2)
 tensioncolor = Color.red()
 compressioncolor = Color.blue()
+tangentcolor = Color.magenta()
+constraintcolor = Color.cyan()
 
 config = Config()
 config.camera.target = [0, 0, 0]
@@ -280,7 +279,7 @@ viewer.scene.add(
 viewer.scene.add(
     compression,
     name="Compression",
-    facecolor=Color.blue(),
+    facecolor=compressioncolor,
     show_lines=False,
 )
 viewer.scene.add(
@@ -298,7 +297,7 @@ viewer.scene.add(
 viewer.scene.add(
     tangents,
     name="Tangents",
-    linecolor=Color.magenta(),
+    linecolor=tangentcolor,
     linewidth=3,
 )
 viewer.scene.add(
@@ -310,7 +309,7 @@ viewer.scene.add(
 viewer.scene.add(
     constraint.geometry,
     name="Constraints",
-    linecolor=Color.cyan(),
+    linecolor=constraintcolor,
     linewidth=2,
 )
 
