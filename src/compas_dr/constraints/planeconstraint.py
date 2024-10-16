@@ -23,6 +23,8 @@ class PlaneConstraint(Constraint):
         "required": ["geometry"],
     }
 
+    geometry: Plane
+
     @classmethod
     def __from_data__(cls, data):
         plane = Plane.__from_data__(data["geometry"])
@@ -42,4 +44,4 @@ class PlaneConstraint(Constraint):
         self._location = self.location + self.tangent * damping
 
     def project(self):
-        self._location = Point(*project_point_plane(self._location, self.geometry))
+        self._location = self.geometry.closest_point(self._location)
