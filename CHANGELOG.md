@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Changed constraint location setter to not check for existence of attribute `projected`.
 * Changed plane projection to use closest point method.
+* Changed constraint update damping parameter to `damping` instead of `c`.
 
 ### Removed
 

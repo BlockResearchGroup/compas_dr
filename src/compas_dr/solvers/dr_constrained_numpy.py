@@ -42,6 +42,7 @@ def dr_constrained_numpy(
     tol2: float = 1e-6,
     c: float = 0.1,
     rk_steps: Literal[1, 2, 4] = 2,
+    damping: float = 0.1,
     callback: Callable = None,
     callback_args: list = None,
 ) -> compas_dr.numdata.ResultData:
@@ -199,6 +200,8 @@ def dr_constrained_numpy(
     # --------------------------------------------------------------------------
 
     for k in range(kmax):
+        print(k)
+
         q_fpre = fpre / l
         q_lpre = f / lpre
         q_EA = EA * (l - linit) / (linit * l)
@@ -235,7 +238,7 @@ def dr_constrained_numpy(
                 continue
             constraint.location = x[vertex]
             constraint.residual = r[vertex]
-            constraint.update(damping=c)
+            constraint.update(damping=damping)
             x[vertex] = constraint.location
             r[vertex] = constraint.residual
 
