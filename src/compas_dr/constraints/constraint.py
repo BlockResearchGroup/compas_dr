@@ -121,9 +121,7 @@ class Constraint(Data):
         self._tangent = None
         self._normal = None
         self._location = Point(*point)
-        if not getattr(self, "projected", None):
-            self.project()
-            self.projected = True
+        self.project()
 
     @property
     def residual(self):
