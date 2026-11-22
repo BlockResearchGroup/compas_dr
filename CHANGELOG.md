@@ -30,12 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `compas_dr.numdata.has_numpy` and the incomplete list fallbacks of `InputData` for environments without NumPy.
 * Removed the `from __future__` imports (Python 2).
 
-### Unverified
+### Not verified against COMPAS 2
 
-* Python 3.13 and 3.14, Linux and Windows have not been tested yet.
-* `CurveConstraint` and `SurfaceConstraint` need a NURBS backend such as `compas_occ`, which is not a requirement of this package. They are tested with `compas_occ` on Python 3.12 only.
-* `SurfaceConstraint` never ran on COMPAS 2 and `CircleConstraint` did not work on a `Circle`; both are tested against closed-form values, not against COMPAS 2 results.
-* `CircleConstraint.__from_data__` is unchanged and untested.
+* `CurveConstraint` and `SurfaceConstraint` need a NURBS backend such as `compas_occ`, which is not a requirement of `compas_dr`. `CurveConstraint` is verified against a COMPAS 2 baseline with `compas_occ`.
+* `SurfaceConstraint` and `CircleConstraint` on a `Circle` did not work with COMPAS 2 and have no baseline; they are verified against closed-form values with COMPAS 3 only.
+* `CircleConstraint.__from_data__` is unchanged and not tested.
+* Python 3.13 and 3.14 are declared but have not been tested yet.
 
 
 ## [0.3.1] 2024-05-14
