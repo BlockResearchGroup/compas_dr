@@ -3,25 +3,14 @@ from __future__ import division
 from __future__ import print_function
 
 from compas.geometry import Plane
-from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import project_point_plane
-from compas.geometry import vector_component
+from compas.linalg import vector_component
 
 from .constraint import Constraint
 
 
 class PlaneConstraint(Constraint):
     """Constraint for limiting the movement of a vertex to a plane."""
-
-    DATASCHEMA = {
-        "type": "object",
-        "properties": {
-            "geometry": Plane.DATASCHEMA,
-            "rhino_guid": {"type": "string"},
-        },
-        "required": ["geometry"],
-    }
 
     geometry: Plane
 
