@@ -63,7 +63,7 @@ class InputData(Data):
     @classmethod
     def __from_data__(cls, data):
         # type: (dict) -> InputData
-        return super(InputData, cls).__from_data__(data)
+        return super().__from_data__(data)
 
     def __init__(
         self,
@@ -304,7 +304,7 @@ class ResultData(Data):
     @classmethod
     def __from_data__(cls, data):
         # type: (dict) -> ResultData
-        return super(ResultData, cls).__from_data__(data)
+        return super().__from_data__(data)
 
     def __init__(self, xyz, q, forces, lengths, residuals):
         # type: (npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike) -> None
