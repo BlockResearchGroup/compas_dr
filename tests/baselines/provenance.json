@@ -1,0 +1,29 @@
+{
+  "package": "compas_dr",
+  "commit": "84a3b4b3b0017280da73054ac811aab020b43beb",
+  "compas": "2.16.0",
+  "compas_occ": "1.5.0",
+  "python": "3.12.16",
+  "numpy": "2.5.5",
+  "scipy": "1.18.1",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "environment": "brg-compas2",
+  "command": "python tests/baselines/record.py tests/baselines",
+  "date": "2026-11-22T14:11:29+00:00",
+  "cases": {
+    "dr-01": "recorded",
+    "dr-02": "recorded",
+    "dr-03": "recorded",
+    "dr-04": "recorded",
+    "dr-05": "recorded",
+    "dr-06": "recorded",
+    "dr-07": "recorded",
+    "dr-08": "recorded",
+    "dr-09": "recorded",
+    "dr-10": "recorded",
+    "dr-11": "recorded",
+    "dr-13": "recorded",
+    "dr-12": "recorded"
+  }
+}
