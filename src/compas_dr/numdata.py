@@ -1,20 +1,24 @@
-try:
-    import numpy as np
-    from compas.linalg import normrow
-    from compas.matrices import connectivity_matrix
-except ImportError:
-    has_numpy = False
-else:
-    has_numpy = True
+from __future__ import annotations
 
-try:
-    import numpy.typing as npt  # noqa: F401
-except ImportError:
-    pass
+from collections.abc import Sequence
+from typing import Any
+from typing import Self
+from typing import cast
 
-import compas.datastructures  # noqa: F401
-import compas.geometry  # noqa: F401
+import numpy as np
 from compas.data import Data
+from compas.datastructures import Mesh
+from compas.linalg import connectivity_matrix
+from compas.linalg import normrow
+from numpy.typing import NDArray
+from scipy.sparse import csr_matrix
+
+from compas_dr._scipy import dot_coordinates
+from compas_dr.types import FloatArray
+from compas_dr.types import FloatNx3
+
+# NumPy is provided by the COMPAS 3 runtime.
+has_numpy = True
 
 
 class InputData(Data):
@@ -55,8 +59,7 @@ class InputData(Data):
     """
 
     @property
-    def __data__(self):
-        # type: () -> dict
+    def __data__(self) -> dict[str, Any]:
         return {
             "vertices": self.vertices,
             "edges": self.edges,
@@ -71,212 +74,171 @@ class InputData(Data):
         }
 
     @classmethod
-    def __from_data__(cls, data):
-        # type: (dict) -> InputData
+    def __from_data__(cls, data: dict[str, Any]) -> Self:
         return super(InputData, cls).__from_data__(data)
 
     def __init__(
         self,
-        vertices,  # type: list[list[float]]
-        edges,  # type: list[tuple[int, int]]
-        fixed,  # type: list[int]
-        loads,  # type: list[list[float]]
-        qpre,  # type: list[float]
-        fpre=None,  # type: list[float] | None
-        lpre=None,  # type: list[float] | None
-        linit=None,  # type: list[float] | None
-        E=None,  # type: list[float] | None
-        radius=None,  # type: list[float] | None
-    ):  # type: (...) -> None
+        vertices: FloatNx3,
+        edges: Sequence[Sequence[int]],
+        fixed: list[int],
+        loads: FloatNx3,
+        qpre: Sequence[float] | FloatArray,
+        fpre: Sequence[float] | FloatArray | None = None,
+        lpre: Sequence[float] | FloatArray | None = None,
+        linit: Sequence[float] | FloatArray | None = None,
+        E: Sequence[float] | FloatArray | None = None,
+        radius: Sequence[float] | FloatArray | None = None,
+    ) -> None:
         self._vertices = vertices
-        self._vertices_array = None
+        self._vertices_array: FloatArray | None = None
         self._edges = edges
-        self._edges_array = None
+        self._edges_array: NDArray[np.int32] | None = None
         self._fixed = fixed
-        self._free = None
+        self._free: list[int] | None = None
         self._loads = loads
-        self._loads_array = None
+        self._loads_array: FloatArray | None = None
         self._qpre = qpre
-        self._qpre_array = None
+        self._qpre_array: FloatArray | None = None
         self._fpre = fpre
-        self._fpre_array = None
+        self._fpre_array: FloatArray | None = None
         self._lpre = lpre
-        self._lpre_array = None
+        self._lpre_array: FloatArray | None = None
         self._linit = linit
-        self._linit_array = None
+        self._linit_array: FloatArray | None = None
         self._E = E
-        self._E_array = None
+        self._E_array: FloatArray | None = None
         self._radius = radius
-        self._radius_array = None
+        self._radius_array: FloatArray | None = None
         # (lazy) computed properties
-        self._C = None
+        self._C: csr_matrix | None = None
 
     @property
-    def vertices(self):
-        # type: () -> npt.ArrayLike
-        if has_numpy:
-            if self._vertices_array is None:
-                self._vertices_array = np.asarray(
-                    self._vertices,
-                    dtype=np.float64,
-                ).reshape((-1, 3))
-            return self._vertices_array
-        return self._vertices
+    def vertices(self) -> FloatArray:
+        if self._vertices_array is None:
+            self._vertices_array = np.asarray(
+                self._vertices,
+                dtype=np.float64,
+            ).reshape((-1, 3))
+        return self._vertices_array
 
     @property
-    def edges(self):
-        # type: () -> npt.ArrayLike
-        if has_numpy:
-            if self._edges_array is None:
-                self._edges_array = np.asarray(
-                    self._edges,
-                    dtype=np.int32,
-                ).reshape((-1, 2))
-            return self._edges_array
-        return self._edges
+    def edges(self) -> NDArray[np.int32]:
+        if self._edges_array is None:
+            self._edges_array = np.asarray(
+                self._edges,
+                dtype=np.int32,
+            ).reshape((-1, 2))
+        return self._edges_array
 
     @property
-    def fixed(self):
-        # type: () -> npt.ArrayLike
+    def fixed(self) -> list[int]:
         return self._fixed
 
     @property
-    def free(self):
-        # type: () -> npt.ArrayLike
+    def free(self) -> list[int]:
         if self._free is None:
             self._free = list(set(range(len(self._vertices))) - set(self._fixed))
         return self._free
 
     @property
-    def loads(self):
-        # type: () -> npt.ArrayLike
-        if has_numpy:
-            if self._loads_array is None:
-                self._loads_array = np.asarray(
-                    self._loads,
-                    dtype=np.float64,
-                ).reshape((-1, 3))
-            return self._loads_array
-        return self._loads
+    def loads(self) -> FloatArray:
+        if self._loads_array is None:
+            self._loads_array = np.asarray(
+                self._loads,
+                dtype=np.float64,
+            ).reshape((-1, 3))
+        return self._loads_array
 
     @property
-    def qpre(self):
-        # type: () -> npt.ArrayLike
-        if has_numpy:
-            if self._qpre_array is None:
-                self._qpre_array = np.asarray(
-                    self._qpre,
-                    dtype=np.float64,
-                ).reshape((-1, 1))
-            return self._qpre_array
-        return self._qpre
+    def qpre(self) -> FloatArray:
+        if self._qpre_array is None:
+            self._qpre_array = np.asarray(
+                self._qpre,
+                dtype=np.float64,
+            ).reshape((-1, 1))
+        return self._qpre_array
 
     @property
-    def fpre(self):
-        # type: () -> npt.ArrayLike
+    def fpre(self) -> FloatArray:
         if self._fpre is None:
             self._fpre = [0.0] * len(self._edges)
-        if has_numpy:
-            if self._fpre_array is None:
-                self._fpre_array = np.asarray(
-                    self._fpre,
-                    dtype=np.float64,
-                ).reshape((-1, 1))
-            return self._fpre_array
-        return self._fpre
+        if self._fpre_array is None:
+            self._fpre_array = np.asarray(
+                self._fpre,
+                dtype=np.float64,
+            ).reshape((-1, 1))
+        return self._fpre_array
 
     @property
-    def lpre(self):
-        # type: () -> npt.ArrayLike
+    def lpre(self) -> FloatArray:
         if self._lpre is None:
             self._lpre = [0.0] * len(self._edges)
-        if has_numpy:
-            if self._lpre_array is None:
-                self._lpre_array = np.asarray(
-                    self._lpre,
-                    dtype=np.float64,
-                ).reshape((-1, 1))
-            return self._lpre_array
-        return self._lpre
+        if self._lpre_array is None:
+            self._lpre_array = np.asarray(
+                self._lpre,
+                dtype=np.float64,
+            ).reshape((-1, 1))
+        return self._lpre_array
 
     @property
-    def linit(self):
-        # type: () -> npt.ArrayLike
+    def linit(self) -> FloatArray:
         if self._linit is None:
             self._linit = [0.0] * len(self._edges)
-        if has_numpy:
-            if self._linit_array is None:
-                self._linit_array = np.asarray(
-                    self._linit,
-                    dtype=np.float64,
-                ).reshape((-1, 1))
-            return self._linit_array
-        return self._linit
+        if self._linit_array is None:
+            self._linit_array = np.asarray(
+                self._linit,
+                dtype=np.float64,
+            ).reshape((-1, 1))
+        return self._linit_array
 
     @property
-    def E(self):
-        # type: () -> npt.ArrayLike
+    def E(self) -> FloatArray:
         if self._E is None:
-            self._E = [0.0] * len(self._edges)
-        if has_numpy:
-            if self._E_array is None:
-                self._E_array = np.asarray(
-                    self._E,
-                    dtype=np.float64,
-                ).reshape((-1, 1))
-            return self._E_array
-        return self._E
+            self._E = [0.0] * len(self._edges)  # pyright: ignore[reportConstantRedefinition]
+        if self._E_array is None:
+            self._E_array = np.asarray(
+                self._E,
+                dtype=np.float64,
+            ).reshape((-1, 1))
+        return self._E_array
 
     @property
-    def radius(self):
-        # type: () -> npt.ArrayLike
+    def radius(self) -> FloatArray:
         if self._radius is None:
             self._radius = [0.0] * len(self._edges)
-        if has_numpy:
-            if self._radius_array is None:
-                self._radius_array = np.asarray(
-                    self._radius,
-                    dtype=np.float64,
-                ).reshape((-1, 1))
-            return self._radius_array
-        return self._radius
+        if self._radius_array is None:
+            self._radius_array = np.asarray(
+                self._radius,
+                dtype=np.float64,
+            ).reshape((-1, 1))
+        return self._radius_array
 
     # =============================================================================
     # Computed
     # =============================================================================
 
     @property
-    def q0(self):
-        if has_numpy:
-            return np.ones((len(self._edges), 1), dtype=np.float64)
-        return [1.0] * len(self._edges)
+    def q0(self) -> FloatArray:
+        return np.ones((len(self._edges), 1), dtype=np.float64)
 
     @property
-    def l0(self):
-        if has_numpy:
-            return normrow(self.C.dot(self.vertices))
-        # return ...
+    def l0(self) -> FloatArray:
+        return normrow(dot_coordinates(self.C, self.vertices))
 
     @property
-    def v0(self):
-        if has_numpy:
-            return np.zeros((len(self._vertices), 3), dtype=np.float64)
-        # return ...
+    def v0(self) -> FloatArray:
+        return np.zeros((len(self._vertices), 3), dtype=np.float64)
 
     @property
-    def r0(self):
-        if has_numpy:
-            return np.zeros((len(self._vertices), 3), dtype=np.float64)
-        # return ...
+    def r0(self) -> FloatArray:
+        return np.zeros((len(self._vertices), 3), dtype=np.float64)
 
     @property
-    def C(self):
-        # type: () -> npt.ArrayLike | None
-        if has_numpy:
-            if self._C is None:
-                self._C = connectivity_matrix(self._edges, rtype="csr")
-            return self._C
-        # return ...
+    def C(self) -> csr_matrix:
+        if self._C is None:
+            self._C = connectivity_matrix(self._edges, rtype="csr")  # pyright: ignore[reportConstantRedefinition]
+        return self._C
 
     # =============================================================================
     # Constructors
@@ -285,16 +247,16 @@ class InputData(Data):
     @classmethod
     def from_mesh(
         cls,
-        mesh,  # type: compas.datastructures.Mesh
-        fixed,  # type: list[int]
-        loads,  # type: list[list[float]]
-        qpre,  # type: list[float]
-        fpre=None,  # type: list[float] | None
-        lpre=None,  # type: list[float] | None
-        linit=None,  # type: list[float] | None
-        E=None,  # type: list[float] | None
-        radius=None,  # type: list[float] | None
-    ):  # type: (...) -> InputData
+        mesh: Mesh,
+        fixed: list[int],
+        loads: FloatNx3,
+        qpre: Sequence[float] | FloatArray,
+        fpre: Sequence[float] | FloatArray | None = None,
+        lpre: Sequence[float] | FloatArray | None = None,
+        linit: Sequence[float] | FloatArray | None = None,
+        E: Sequence[float] | FloatArray | None = None,
+        radius: Sequence[float] | FloatArray | None = None,
+    ) -> Self:
         vertex_index = {vertex: index for index, vertex in enumerate(mesh.vertices())}
         vertices = mesh.vertices_attributes("xyz")
         edges = [(vertex_index[u], vertex_index[v]) for u, v in mesh.edges()]
@@ -335,25 +297,21 @@ class ResultData(Data):
     """
 
     @property
-    def __data__(self):
-        # type: () -> dict
+    def __data__(self) -> dict[str, Any]:
         return {}
 
     @classmethod
-    def __from_data__(cls, data):
-        # type: (dict) -> ResultData
+    def __from_data__(cls, data: dict[str, Any]) -> Self:
         return super(ResultData, cls).__from_data__(data)
 
-    def __init__(self, xyz, q, forces, lengths, residuals):
-        # type: (npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike) -> None
+    def __init__(self, xyz: FloatArray, q: FloatArray, forces: FloatArray, lengths: FloatArray, residuals: FloatArray) -> None:
         self.xyz = xyz
         self.q = q
         self.forces = forces
         self.lengths = lengths
         self.residuals = residuals
 
-    def update_mesh(self, mesh, vertex_index=None):
-        # type: (compas.datastructures.Mesh, dict[int, int] | None) -> None
+    def update_mesh(self, mesh: Mesh, vertex_index: dict[int, int] | None = None) -> None:
         """Update the geometry of a mesh with the results.
 
         Parameters
@@ -371,4 +329,4 @@ class ResultData(Data):
 
         for vertex in mesh.vertices():
             index = vertex_index[vertex]
-            mesh.vertex_attributes(vertex, "xyz", self.xyz[index])
+            mesh.vertex_attributes(vertex, "xyz", cast("Sequence[float]", self.xyz[index]))

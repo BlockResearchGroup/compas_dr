@@ -4,9 +4,10 @@ from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Sphere
 from compas.geometry import Vector
+from compas_viewer import Viewer
+
 from compas_dr.numdata import InputData
 from compas_dr.solvers import dr_numpy
-from compas_viewer import Viewer
 
 # =============================================================================
 # Input

@@ -1,18 +1,25 @@
-from typing import Callable
+from collections.abc import Callable
+from collections.abc import Sequence
+from typing import Any
 from typing import Literal
-from typing import Sequence
+from typing import cast
 
 import numpy
-import scipy.sparse  # noqa: F401
 from compas.linalg import normrow
 from numpy import isinf
 from numpy import isnan
-from scipy.linalg import norm
-from scipy.sparse import diags
+from scipy.sparse import csr_matrix
 
-import compas_dr.numdata
+from compas_dr._scipy import array_norm
+from compas_dr._scipy import diagonal
+from compas_dr._scipy import dot_coordinates
+from compas_dr._scipy import squared_transpose
+from compas_dr._scipy import weighted_product
+from compas_dr._scipy import weighted_transpose
 from compas_dr.constraints import Constraint
+from compas_dr.numdata import InputData
 from compas_dr.numdata import ResultData
+from compas_dr.types import FloatArray
 
 old_settings = numpy.seterr(divide="ignore")
 
@@ -26,7 +33,7 @@ K = [
 
 
 class Coeff:
-    def __init__(self, c):
+    def __init__(self, c: float) -> None:
         self.c = c
         self.a = (1 - c * 0.5) / (1 + c * 0.5)
         self.b = 0.5 * (1 + self.a)
@@ -34,8 +41,8 @@ class Coeff:
 
 def dr_constrained_numpy(
     *,
-    indata: compas_dr.numdata.InputData,
-    constraints: Sequence[Constraint],
+    indata: InputData,
+    constraints: Sequence[Constraint[Any] | None],
     kmax: int = 10000,
     dt: float = 1.0,
     tol1: float = 1e-3,
@@ -43,26 +50,27 @@ def dr_constrained_numpy(
     c: float = 0.1,
     rk_steps: Literal[1, 2, 4] = 2,
     damping: float = 0.1,
-    callback: Callable = None,
-    callback_args: list = None,
-) -> compas_dr.numdata.ResultData:
-    """Implementation of the dynamic relaxation method for form finding and analysis
-    of articulated networks of axial-force members.
+    callback: Callable[[int, FloatArray, float, float, Any], object] | None = None,
+    callback_args: object = None,
+) -> ResultData:
+    """Relax a network of axial members with supports constrained to geometry.
 
     Parameters
     ----------
-    indata : :class:`compas_dr.numdata.InputData`
-        An input data object.
-    constraints : list[:class:`~compas_dr.constraints.Constraint`]
-        Vertex constraints.
+    indata : InputData
+        Coordinates, topology, support indices, loads and member properties.
+        The solver updates the cached coordinates in place.
+    constraints : sequence of Constraint or None
+        One entry per vertex. A sliding support is included in `indata.fixed`
+        so only the constraint update moves it.
     kmax : int, optional
         The maximum number of iterations.
     dt : float, optional
         The time step for the integration scheme.
     tol1 : float, optional
-        Tolerance for the sum of the length of all residual force vectors.
+        Tolerance for the Frobenius norm of the residual forces at free vertices.
     tol2 : float, optional
-        Tolerance for the sum of the length of all displacement vectors.
+        Tolerance for the Frobenius norm of the displacements at free vertices.
     c : float, optional
         Value used to calculate coefficients "a" and "b", with
         "a" used as a multiplication factor for the starting velocity for the RK integration at every iteration, and
@@ -79,13 +87,14 @@ def dr_constrained_numpy(
         * `crit2`: the norm of the displacement vectors
         * `callback_args`: optional additional arguments
 
-    callback_args : tuple, optional
-        Additional arguments passed to the callback.
+    callback_args : object, optional
+        Value passed unchanged as the last argument of the callback.
 
     Returns
     -------
-    :class:`compas_dr.numdata.ResultData`
-        A result data object.
+    ResultData
+        Coordinates and residual vectors in vertex order, and force densities,
+        axial forces and lengths in edge order.
 
     Raises
     ------
@@ -94,17 +103,15 @@ def dr_constrained_numpy(
 
     Notes
     -----
-    For more info, see [1]_.
+    Each iteration updates the constraint objects. The stopping criteria
+    monitor free vertices, so a sliding support may retain a small tangential
+    residual when the solver stops.
 
     References
     ----------
     .. [1] De Laet L., Veenendaal D., Van Mele T., Mollaert M. and Block P.,
            *Bending incorporated: designing tension structures by integrating bending-active elements*,
            Proceedings of Tensinet Symposium 2013,Istanbul, Turkey, 2013.
-
-    Examples
-    --------
-    >>>
 
     """
     # --------------------------------------------------------------------------
@@ -137,12 +144,9 @@ def dr_constrained_numpy(
     E = indata.E  # kN/mm2 => GPa
     radius = indata.radius  # mm
 
-    C = indata.C  # type: scipy.sparse.csr_matrix
-    Ct = C.transpose()
-    Ci = C[:, free]
-    Cit = Ci.transpose()
-    Ct2 = Ct.copy()
-    Ct2.data **= 2
+    C = indata.C
+    Ci = cast(csr_matrix, C[:, free])
+    Ct2 = squared_transpose(C)
 
     A = 3.14159 * radius**2  # mm2
     EA = E * A  # kN
@@ -167,21 +171,21 @@ def dr_constrained_numpy(
     # helpers
     # --------------------------------------------------------------------------
 
-    def rk(x0, v0, steps=2):
-        def acceleration(t, v):
+    def rk(x0: FloatArray, v0: FloatArray, steps: Literal[1, 2, 4] = 2) -> FloatArray:
+        def acceleration(t: float, v: FloatArray) -> FloatArray:
             dx = v * t
             x[free] = x0[free] + dx[free]
-            r[free] = p[free] - D.dot(x)
+            r[free] = p[free] - dot_coordinates(D, x)
             return cb * r / mass
 
         if steps == 1:
             return acceleration(dt, v0)
 
         if steps == 2:
-            B = [0.0, 1.0]
-            K0 = dt * acceleration(K[0][0] * dt, v0)
-            K1 = dt * acceleration(K[1][0] * dt, v0 + K[1][1] * K0)
-            dv = B[0] * K0 + B[1] * K1
+            b = [0.0, 1.0]
+            k0 = dt * acceleration(K[0][0] * dt, v0)
+            k1 = dt * acceleration(K[1][0] * dt, v0 + K[1][1] * k0)
+            dv = b[0] * k0 + b[1] * k1
             return dv
 
         if steps == 4:
@@ -211,9 +215,9 @@ def dr_constrained_numpy(
         q_EA[isnan(q_EA)] = 0
 
         q = qpre + q_fpre + q_lpre + q_EA
-        Q = diags([q[:, 0]], [0])
-        D = Cit.dot(Q).dot(C)
-        mass = 0.5 * dt**2 * Ct2.dot(qpre + q_fpre + q_lpre + EA / linit)
+        Q = diagonal(q[:, 0])
+        D = weighted_product(Ci, Q, C)
+        mass = 0.5 * dt**2 * dot_coordinates(Ct2, qpre + q_fpre + q_lpre + EA / linit)
 
         # RK
 
@@ -226,10 +230,10 @@ def dr_constrained_numpy(
 
         # update
 
-        u = C.dot(x)
+        u = dot_coordinates(C, x)
         l = normrow(u)  # noqa: E741
         f = q * l
-        r = p - Ct.dot(Q).dot(u)
+        r = p - dot_coordinates(weighted_transpose(C, Q), u)
 
         # update constraints
 
@@ -239,13 +243,13 @@ def dr_constrained_numpy(
             constraint.location = x[vertex]
             constraint.residual = r[vertex]
             constraint.update(damping=damping)
-            x[vertex] = constraint.location
-            r[vertex] = constraint.residual
+            x[vertex] = cast("Sequence[float]", constraint.location)
+            r[vertex] = cast("Sequence[float]", constraint.residual)
 
         # crits
 
-        crit1 = norm(r[free])
-        crit2 = norm(dx[free])
+        crit1 = array_norm(r[free])
+        crit2 = array_norm(dx[free])
 
         # callback
 

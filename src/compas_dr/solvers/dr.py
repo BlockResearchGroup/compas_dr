@@ -1,8 +1,10 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import annotations
 
+from collections.abc import Callable
+from collections.abc import Sequence
 from math import sqrt
+from typing import Any
+from typing import Literal
 
 K = [
     [0.0],
@@ -13,13 +15,13 @@ K = [
 
 
 class Coeff:
-    def __init__(self, c):
+    def __init__(self, c: float) -> None:
         self.c = c
         self.a = (1 - c * 0.5) / (1 + c * 0.5)
         self.b = 0.5 * (1 + self.a)
 
 
-def norm_vector(vector):
+def norm_vector(vector: Sequence[float]) -> float:
     """
     Calculate the length of a vector.
 
@@ -40,7 +42,7 @@ def norm_vector(vector):
     return sqrt(sum(axis**2 for axis in vector))
 
 
-def norm_vectors(vectors):
+def norm_vectors(vectors: Sequence[Sequence[float]]) -> list[float]:
     """
     Calculate the norm of each vector in a list of vectors.
 
@@ -61,7 +63,7 @@ def norm_vectors(vectors):
     return [norm_vector(vector) for vector in vectors]
 
 
-def adjacency_from_edges(edges):
+def adjacency_from_edges(edges: Sequence[Sequence[int]]) -> dict[int, list[int]]:
     """Construct an adjacency dictionary from a set of edges.
 
     Parameters
@@ -79,7 +81,7 @@ def adjacency_from_edges(edges):
     --------
     >>>
     """
-    adj = {}
+    adj: dict[int, list[int]] = {}
     for i, j in iter(edges):
         adj.setdefault(i, []).append(j)
         adj.setdefault(j, []).append(i)
@@ -87,24 +89,24 @@ def adjacency_from_edges(edges):
 
 
 def dr(
-    vertices,
-    edges,
-    fixed,
-    loads,
-    qpre,
-    fpre=None,
-    lpre=None,
-    linit=None,
-    E=None,
-    radius=None,
-    kmax=100,
-    dt=1.0,
-    tol1=1e-3,
-    tol2=1e-6,
-    c=0.1,
-    callback=None,
-    callback_args=None,
-):
+    vertices: list[list[float]],
+    edges: Sequence[Sequence[int]],
+    fixed: Sequence[int],
+    loads: Sequence[Sequence[float]],
+    qpre: Sequence[float] | None,
+    fpre: Sequence[float] | None = None,
+    lpre: Sequence[float] | None = None,
+    linit: Sequence[float] | None = None,
+    E: Sequence[float] | None = None,
+    radius: Sequence[float] | None = None,
+    kmax: int = 100,
+    dt: float = 1.0,
+    tol1: float = 1e-3,
+    tol2: float = 1e-6,
+    c: float = 0.1,
+    callback: Callable[[int, list[list[float]], tuple[float, float], Any], object] | None = None,
+    callback_args: object = None,
+) -> tuple[list[list[float]], list[float], list[float], list[float], list[list[float]]]:
     """Implementation of dynamic relaxation with RK integration scheme in pure Python.
 
     Parameters
@@ -123,12 +125,13 @@ def dr(
         Prescribed forces in the edges.
     lpre : list, optional
         Prescribed lengths of the edges.
-    linit : list, optoional
-        Initial length of the edges.
+    linit : list, optional
+        Initial edge lengths. Accepted for compatibility with the NumPy
+        solvers.
     E : list, optional
-        Stiffness of the edges.
+        Edge stiffnesses. Accepted for compatibility with the NumPy solvers.
     radius : list, optional
-        Radius of the edges.
+        Edge radii. Accepted for compatibility with the NumPy solvers.
     kmax : int, optional
         Maximum number of iterations.
     dt : float, optional
@@ -136,7 +139,7 @@ def dr(
     tol1 : float, optional
         Convergence criterion for the residual forces.
     tol2 : float, optional
-        Convergence criterion for the displacements in between interations.
+        Convergence criterion for displacement between iterations.
     c : float, optional
         Damping factor for viscous damping.
     callback : callable, optional
@@ -150,20 +153,23 @@ def dr(
 
     Returns
     -------
-    xyz : array
-        XYZ coordinates of the equilibrium geometry.
-    q : array
-        Force densities in the edges.
-    f : array
-        Forces in the edges.
-    l : array
-        Lengths of the edges
-    r : array
-        Residual forces.
+    xyz : list of list of float
+        XYZ coordinates of the equilibrium geometry, in vertex order.
+    q : list of float
+        Force densities in edge order.
+    f : list of float
+        Axial forces in edge order.
+    l : list of float
+        Lengths in edge order.
+    r : list of list of float
+        Residual forces in vertex order.
 
-    Examples
-    --------
-    >>>
+    Notes
+    -----
+    The solver uses four-step Runge–Kutta integration and updates the input
+    vertex list in place. The force model includes prescribed force densities,
+    forces and lengths. Elastic stiffness terms are available in the NumPy
+    solvers.
     """
     if callback:
         if not callable(callback):
@@ -200,10 +206,10 @@ def dr(
     # initial values
     # --------------------------------------------------------------------------
 
-    Q = [1.0 for _ in range(e)]
-    L = [sum((X[i][axis] - X[j][axis]) ** 2 for axis in (0, 1, 2)) ** 0.5 for i, j in iter(edges)]
-    F = [q * length for q, length in zip(Q, L)]
-    M = [sum(0.5 * dt**2 * Q[ij_e[(i, j)]] for j in i_nbrs[i]) for i in range(n)]
+    densities = [1.0 for _ in range(e)]
+    lengths = [sum((X[i][axis] - X[j][axis]) ** 2 for axis in (0, 1, 2)) ** 0.5 for i, j in iter(edges)]
+    forces = [q * length for q, length in zip(densities, lengths)]
+    masses = [sum(0.5 * dt**2 * densities[ij_e[(i, j)]] for j in i_nbrs[i]) for i in range(n)]
     V = [[0.0, 0.0, 0.0] for _ in range(n)]
     R = [[0.0, 0.0, 0.0] for _ in range(n)]
     dX = [[0.0, 0.0, 0.0] for _ in range(n)]
@@ -212,29 +218,29 @@ def dr(
     # helpers
     # --------------------------------------------------------------------------
 
-    def update_R():
+    def update_R() -> None:
         for i in range(n):
             x = X[i][0]
             y = X[i][1]
             z = X[i][2]
             f = [0.0, 0.0, 0.0]
             for j in i_nbrs[i]:
-                q = Q[ij_e[(i, j)]]
+                q = densities[ij_e[(i, j)]]
                 f[0] += q * (X[j][0] - x)
                 f[1] += q * (X[j][1] - y)
                 f[2] += q * (X[j][2] - z)
             R[i] = [P[i][axis] + f[axis] for axis in (0, 1, 2)]
 
-    def rk(X0, V0, steps=2):
-        def a(t, V):
+    def rk(X0: list[list[float]], V0: list[list[float]], steps: Literal[2, 4] = 2) -> list[list[float]]:
+        def a(t: float, V: list[list[float]]) -> list[list[float]]:
             dX = [[V[i][axis] * t for axis in (0, 1, 2)] for i in range(n)]
             for i in free:
                 X[i] = [X0[i][axis] + dX[i][axis] for axis in (0, 1, 2)]
             update_R()
-            return [[cb * R[i][axis] / M[i] for axis in (0, 1, 2)] for i in range(n)]
+            return [[cb * R[i][axis] / masses[i] for axis in (0, 1, 2)] for i in range(n)]
 
         if steps == 2:
-            B = [0.0, 1.0]
+            weights = [0.0, 1.0]
             a0 = a(K[0][0] * dt, V0)
             k0 = [[dt * a0[i][axis] for axis in (0, 1, 2)] for i in range(n)]
             a1 = a(
@@ -242,10 +248,10 @@ def dr(
                 [[V0[i][axis] + K[1][1] * k0[i][axis] for axis in (0, 1, 2)] for i in range(n)],
             )
             k1 = [[dt * a1[i][axis] for axis in (0, 1, 2)] for i in range(n)]
-            return [[B[0] * k0[i][axis] + B[1] * k1[i][axis] for axis in (0, 1, 2)] for i in range(n)]
+            return [[weights[0] * k0[i][axis] + weights[1] * k1[i][axis] for axis in (0, 1, 2)] for i in range(n)]
 
         if steps == 4:
-            B = [1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0]
+            weights = [1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0]
             a0 = a(K[0][0] * dt, V0)
             k0 = [[dt * a0[i][axis] for axis in (0, 1, 2)] for i in range(n)]
             a1 = a(
@@ -263,7 +269,7 @@ def dr(
                 [[V0[i][axis] + K[3][1] * k0[i][axis] + K[3][2] * k1[i][axis] + K[3][3] * k2[i][axis] for axis in (0, 1, 2)] for i in range(n)],
             )
             k3 = [[dt * a3[i][axis] for axis in (0, 1, 2)] for i in range(n)]
-            return [[B[0] * k0[i][axis] + B[1] * k1[i][axis] + B[2] * k2[i][axis] + B[3] * k3[i][axis] for axis in (0, 1, 2)] for i in range(n)]
+            return [[weights[0] * k0[i][axis] + weights[1] * k1[i][axis] + weights[2] * k2[i][axis] + weights[3] * k3[i][axis] for axis in (0, 1, 2)] for i in range(n)]
 
         raise NotImplementedError
 
@@ -272,11 +278,11 @@ def dr(
     # --------------------------------------------------------------------------
 
     for k in range(kmax):
-        Qfpre = [a / b if b else 0 for a, b in zip(Fpre, L)]
-        Qlpre = [a / b if b else 0 for a, b in zip(F, Lpre)]
+        Qfpre = [a / b if b else 0 for a, b in zip(Fpre, lengths)]
+        Qlpre = [a / b if b else 0 for a, b in zip(forces, Lpre)]
 
-        Q = [a + b + c for a, b, c in zip(Qpre, Qfpre, Qlpre)]
-        M = [sum(0.5 * dt**2 * Q[ij_e[(i, j)]] for j in i_nbrs[i]) for i in range(n)]
+        densities = [a + b + c for a, b, c in zip(Qpre, Qfpre, Qlpre)]
+        masses = [sum(0.5 * dt**2 * densities[ij_e[(i, j)]] for j in i_nbrs[i]) for i in range(n)]
 
         X0 = [_[:] for _ in X]
         V0 = [[ca * V[i][axis] for axis in (0, 1, 2)] for i in range(n)]
@@ -290,8 +296,8 @@ def dr(
             dX[i] = [V[i][axis] * dt for axis in (0, 1, 2)]
             X[i] = [X0[i][axis] + dX[i][axis] for axis in (0, 1, 2)]
 
-        L = [sum((X[i][axis] - X[j][axis]) ** 2 for axis in (0, 1, 2)) ** 0.5 for i, j in iter(edges)]
-        F = [q * length for q, length in zip(Q, L)]
+        lengths = [sum((X[i][axis] - X[j][axis]) ** 2 for axis in (0, 1, 2)) ** 0.5 for i, j in iter(edges)]
+        forces = [q * length for q, length in zip(densities, lengths)]
 
         update_R()
 
@@ -315,4 +321,4 @@ def dr(
 
     update_R()
 
-    return X, Q, F, L, R
+    return X, densities, forces, lengths, R

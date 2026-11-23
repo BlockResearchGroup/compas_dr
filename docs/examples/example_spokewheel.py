@@ -7,11 +7,12 @@ from compas.geometry import NurbsCurve
 from compas.geometry import Vector
 from compas.itertools import pairwise
 from compas.tolerance import TOL
+from compas_viewer import Viewer
+from compas_viewer.config import Config
+
 from compas_dr.constraints import Constraint
 from compas_dr.numdata import InputData
 from compas_dr.solvers import dr_constrained_numpy
-from compas_viewer import Viewer
-from compas_viewer.config import Config
 
 OUTER = 0
 INNER = 40

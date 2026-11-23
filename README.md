@@ -3,7 +3,7 @@
 This package provides equilibrium solvers and constraints
 for constrained form finding using the "dynamic relaxation" method.
 
-The solvers can be used through the `compas_dr` paclage directly,
+The solvers can be used through the `compas_dr` package directly,
 or through COMPAS FormFinder, which is a form finding tool with a GUI
 combining various different form finding approaches.
 
@@ -20,7 +20,7 @@ To install the latest development version, do:
 ```bash
 git clone https://github.com/blockresearchgroup/compas_dr.git
 cd compas_dr
-pip install -e ".[dev]"
+uv sync --locked --group docs
 ```
 
 ## Documentation
