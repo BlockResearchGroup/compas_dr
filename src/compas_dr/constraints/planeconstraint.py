@@ -8,15 +8,11 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 
-from ._dataschemas import PLANE
-from ._dataschemas import constraint_schema
 from .constraint import Constraint
 
 
 class PlaneConstraint(Constraint[Plane]):
     """Constraint for limiting the movement of a vertex to a plane."""
-
-    DATASCHEMA = constraint_schema(PLANE)
 
     @classmethod
     def __from_data__(cls, data: dict[str, Any]) -> Self:
