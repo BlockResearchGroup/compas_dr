@@ -10,13 +10,10 @@ free vertex at `(3, 0, -1)`.
 --8<-- "docs/examples/loaded_network.py"
 ```
 
-## Mesh examples
+## Support illustrations
 
-The original [mesh grid script](examples/example_mesh_basic.py) fixes the
-corners of a mesh. The [supported arch script](examples/example_mesh_constrained_on-arch.py)
-adds sliding vertices along a NURBS curve. The [spoked wheel script](examples/example_spokewheel.py)
-constructs a cable network. These COMPAS 2 examples are retained as references
-for the viewer and geometry backend workflows. The loaded-network example
-is exercised in COMPAS 3 CI.
+These illustrations are from earlier COMPAS 2 viewer runs. They show a mesh
+with fixed corners and a mesh with sliding supports along a NURBS arch.
 
-![Mesh supported by an arch](_images/example_mesh_constrained_on-arch.png)
+![Mesh with fixed corners](assets/images/example_mesh_basic.png)
+![Mesh supported by an arch](assets/images/example_mesh_constrained_on-arch.png)
