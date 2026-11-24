@@ -13,7 +13,7 @@ from compas_dr.solvers import dr_numpy
 
 
 @pytest.mark.parametrize("constrained", [False, True])
-def test_loaded_network_converges_to_equilibrium(constrained: bool) -> None:
+def test_loaded_network_converges_to_equilibrium(constrained: bool, capsys: pytest.CaptureFixture[str]) -> None:
     """Check static equilibrium independently of the DR iteration scheme."""
     # Set stiffness and other prestress terms to their zero defaults. The
     # equilibrium of the resulting constant-q network is 4X = A + 3B + P.
@@ -39,6 +39,7 @@ def test_loaded_network_converges_to_equilibrium(constrained: bool) -> None:
         else:
             result = dr_numpy(indata=indata, kmax=1000, tol1=1e-8, tol2=0, callback=callback, callback_args=marker)
 
+    assert capsys.readouterr().out == ""
     assert iterations[0][0] == 0
     assert iterations[-1][0] < 999
     assert iterations[-1][1] < 1e-8

@@ -204,8 +204,6 @@ def dr_constrained_numpy(
     # --------------------------------------------------------------------------
 
     for k in range(kmax):
-        print(k)
-
         q_fpre = fpre / l
         q_lpre = f / lpre
         q_EA = EA * (l - linit) / (linit * l)
