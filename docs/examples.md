@@ -4,13 +4,16 @@
 
 Two fixed vertices sit at `(0, 0, 0)` and `(4, 0, 0)`. Their edges to the free
 vertex have force densities 1 and 3. Balancing a downward load of 4 gives the
-free vertex at `(3, 0, -1)`.
+analytical position `(3, 0, -1)`. The script prints the position reached by
+dynamic relaxation with the default stopping tolerances.
 
 ```python
 --8<-- "docs/examples/loaded_network.py"
 ```
 
-## Mesh with fixed corners or an arch
+## Viewer examples
+
+### Mesh with fixed corners or an arch
 
 Run the scripts from the repository root in the interactive COMPAS 3
 environment with this package and `compas_viewer` installed. The arch example
@@ -33,7 +36,7 @@ boundary. In the second example, the middle row slides along a NURBS arch
 --8<-- "docs/examples/viewer/mesh_on_arch.py"
 ```
 
-## Prestressed spoked wheel
+### Prestressed spoked wheel
 
 The double-layer wheel uses prestressed struts, a downward load on the lower
 inner ring, and supports that slide along the outer ellipse. Two rim nodes

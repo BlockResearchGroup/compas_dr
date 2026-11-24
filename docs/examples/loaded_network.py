@@ -1,5 +1,3 @@
-import numpy as np
-
 from compas_dr.numdata import InputData
 from compas_dr.solvers import dr_numpy
 
@@ -24,21 +22,10 @@ data = InputData(
     loads=loads,
     qpre=qpre,
 )
-with np.errstate(divide="ignore", invalid="ignore"):
-    result = dr_numpy(
-        data,
-        tol1=1e-8,
-        tol2=0,
-    )
+result = dr_numpy(data)
 
 # ==============================================================================
-# Verify equilibrium
+# Result
 # ==============================================================================
 
-np.testing.assert_allclose(
-    result.xyz[0],
-    [3, 0, -1],
-    rtol=0,
-    atol=1e-8,
-)
-print(result.xyz[0])
+print("Free vertex at", result.xyz[0])
