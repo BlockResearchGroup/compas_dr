@@ -35,9 +35,6 @@ classifiers = [
 Homepage = "https://blockresearchgroup.github.io/compas_dr"
 Repository = "https://github.com/blockresearchgroup/compas_dr"
 
-[project.entry-points."compas.plugins"]
-compas_dr_install = "compas_dr.install"
-
 [project.optional-dependencies]
 hpc = ["numba"]
 
