@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed the legacy Viewer examples and the `scripts/` and `notebooks/` folders.
 * Removed the unused `temp/` placeholder directory.
 * Removed the obsolete Rhino install plugin and its package entry point.
+* Removed obsolete Python 2.7 compatibility imports, modernised legacy `super` calls, and documented the Python 3.12+ convention.
 * Removed the unconditional per-iteration print from `dr_constrained_numpy`. Use its callback to report progress.
 
 ## [0.3.1] 2024-05-14

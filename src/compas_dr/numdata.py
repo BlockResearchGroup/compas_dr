@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections.abc import Sequence
 from typing import Any
 from typing import Self
@@ -75,7 +73,7 @@ class InputData(Data):
 
     @classmethod
     def __from_data__(cls, data: dict[str, Any]) -> Self:
-        return super(InputData, cls).__from_data__(data)
+        return super().__from_data__(data)
 
     def __init__(
         self,
@@ -302,7 +300,7 @@ class ResultData(Data):
 
     @classmethod
     def __from_data__(cls, data: dict[str, Any]) -> Self:
-        return super(ResultData, cls).__from_data__(data)
+        return super().__from_data__(data)
 
     def __init__(self, xyz: FloatArray, q: FloatArray, forces: FloatArray, lengths: FloatArray, residuals: FloatArray) -> None:
         self.xyz = xyz
